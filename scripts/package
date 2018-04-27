@@ -72,7 +72,15 @@ if echo $TAG | grep -q dirty; then
 fi
 
 cp ../bin/rancher .
-docker build -t ${REPO}/cli:${TAG} .
+#docker build -t ${REPO}/cli:${TAG} .
 
-echo ${REPO}/cli:${TAG} > ../dist/images
-echo Built ${REPO}/cli:${TAG}
+if dapper -d --build -f Dockerfile -- -t ${REPO}/cli:${TAG}${SUFFIX} .; then
+    echo Built ${REPO}/cli:${TAG}${SUFFIX}
+elif [ "$?" != "42" ]; then
+    exit 1
+else
+    echo "Skipping ${TAG}${SUFFIX}"
+    exit 0
+fi
+echo ${REPO}/cli:${TAG}${SUFFIX} > ../dist/images
+echo Built ${REPO}/cli:${TAG}${SUFFIX}
