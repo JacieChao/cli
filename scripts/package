@@ -7,6 +7,10 @@ cd $(dirname $0)/..
 
 DIST=$(pwd)/dist/artifacts
 
+ARCH=${ARCH:-"amd64"}
+SUFFIX=""
+[ "${ARCH}" != "amd64" ] && SUFFIX="_${ARCH}"
+
 mkdir -p $DIST/${VERSION} $DIST/latest
 
 for i in build/bin/*; do
@@ -44,23 +48,18 @@ for i in build/bin/*; do
         cd $BASE
         NAME=$(basename $i | sed 's/_/-/g')
         if [ -z "$EXT" ]; then
-            tar cvzf $DIST/${VERSION}/${NAME}-${VERSION}.tar.gz .
-            cp $DIST/${VERSION}/${NAME}-${VERSION}.tar.gz $DIST/latest/${NAME}.tar.gz
+            tar cvzf $DIST/${VERSION}/${NAME}-${VERSION}-${ARCH}.tar.gz .
+            cp $DIST/${VERSION}/${NAME}-${VERSION}-${ARCH}.tar.gz $DIST/latest/${NAME}-${ARCH}.tar.gz
 
             tar cvJf $DIST/${VERSION}/${NAME}-${VERSION}.tar.xz .
             cp $DIST/${VERSION}/${NAME}-${VERSION}.tar.xz $DIST/latest/${NAME}.tar.xz
         else
             NAME=$(echo $NAME | sed 's/'${EXT}'//g')
-            zip -r $DIST/${VERSION}/${NAME}-${VERSION}.zip *
-            cp $DIST/${VERSION}/${NAME}-${VERSION}.zip $DIST/latest/${NAME}.zip
+            zip -r $DIST/${VERSION}/${NAME}-${VERSION}-${ARCH}.zip *
+            cp $DIST/${VERSION}/${NAME}-${VERSION}-${ARCH}.zip $DIST/latest/${NAME}-${ARCH}.zip
         fi
     )
 done
-
-
-ARCH=${ARCH:-"amd64"}
-SUFFIX=""
-[ "${ARCH}" != "amd64" ] && SUFFIX="_${ARCH}"
 
 cd package
 
@@ -70,17 +69,15 @@ REPO=${REPO:-rancher}
 if echo $TAG | grep -q dirty; then
     TAG=dev
 fi
-
 cp ../bin/rancher .
 #docker build -t ${REPO}/cli:${TAG} .
 
-if dapper -d --build -f Dockerfile -- -t ${REPO}/cli:${TAG}${SUFFIX} .; then
-    echo Built ${REPO}/cli:${TAG}${SUFFIX}
+if dapper -d --build -f Dockerfile -- -t ${REPO}/cli:${TAG} .; then
+    echo Built ${REPO}/cli:${TAG}
 elif [ "$?" != "42" ]; then
     exit 1
 else
     echo "Skipping ${TAG}${SUFFIX}"
     exit 0
 fi
-echo ${REPO}/cli:${TAG}${SUFFIX} > ../dist/images
-echo Built ${REPO}/cli:${TAG}${SUFFIX}
+echo ${REPO}/cli:${TAG} > ../dist/images
